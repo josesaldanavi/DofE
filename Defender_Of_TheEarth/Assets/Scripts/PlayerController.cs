@@ -4,47 +4,76 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public float damage;
     public float range;
     public Camera playerCamera;
+    protected float cameraAngle;
+    protected float cameraAngleSpeed=0.2f;
+    public FixedTouchField touchField;
+    public FixedJoystick leftJoystick;
     Vector2 touchDeltaPosition;
+    private Vector3 m_move;
+    public Enemy enemyScript;
+    public float hMovement;
+    public float vMovement;
+
+    private void Start()
+    {
+
+    }
 
     void Update()
     {
+        MovePlayer();
         MoveCameraPlayer();
+    }
+
+
+    private void OnMouseDown()
+    {
+        Shoot();
+        
+    }
+
+    private void FixedUpdate()
+    {
+        
+    }
+
+    void MovePlayer()
+    {
+        hMovement = leftJoystick.Horizontal;
+        vMovement = leftJoystick.Vertical;
+
+        m_move = hMovement * Vector3.right + vMovement * Vector3.forward;
     }
 
     void MoveCameraPlayer()
     {
-        /*funciona en pc , hace que se traslade la camara al lugar que estas moviendo*/
+        cameraAngle += touchField.TouchDist.x * cameraAngleSpeed;
 
-        if (Input.GetMouseButton(0))
-        {
-            float pointer_x = Input.GetAxis("Mouse X");
-            float pointer_y = Input.GetAxis("Mouse Y");
-            playerCamera.transform.Translate(-pointer_x * 0.5f,
-                        -pointer_y * 0.5f, 0);
-        }
+        Camera.main.transform.position = transform.position + Quaternion.AngleAxis(cameraAngle, Vector3.up) * new Vector3(-50, 19 , 10);
+        Camera.main.transform.rotation = Quaternion.LookRotation(transform.position + Vector3.up*2f - Camera.main.transform.position, Vector3.up);
+        
 
-        /*Funciona en mobile , hace que se traslade la camara con el movimiento que le haces*/
-        /*  if (Input.touchCount == 1)
-         {
-             Touch touchZero = Input.GetTouch(0);
-             if (touchZero.phase == TouchPhase.Moved)
-             {
-                 touchDeltaPosition = Input.GetTouch(0).deltaPosition;
-                 transform.eulerAngles += new Vector3(touchDeltaPosition.y, -touchDeltaPosition.x, 0);﻿
-             }
-         }
-         */
     }
+
 
     void Shoot()
     {
         RaycastHit hit;
-        //si por fisicas con raycasting, toma algo desde el origen con la direccion forward,con un rango maximo
-        if(Physics.Raycast(playerCamera.transform.position,playerCamera.transform.forward, out hit , range))
+        Ray ray;
+        if(Input.touchCount>0 || Input.GetTouch(0).phase == TouchPhase.Began)
         {
-            Debug.Log(hit.transform.name);
+            ray = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
+            Debug.DrawRay(ray.origin, ray.direction * 20, Color.red);
+
+            if(Physics.Raycast(ray,out hit , Mathf.Infinity))
+            {
+                enemyScript.TakeDamage(damage);
+            }
         }
+
     }
+    
 }
